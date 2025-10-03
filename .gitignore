@@ -1,0 +1,26 @@
+# Node.js
+node_modules/
+npm-debug.log*
+.env
+
+# Build artifacts
+build/
+dist/
+
+# Logs
+*.log
+
+# OS and Editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Testing
+coverage/
+
+# Other
+*.tgz
+
+#development
+nodemon.json

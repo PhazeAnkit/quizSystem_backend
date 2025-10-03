@@ -1,0 +1,26 @@
+{
+  "name": "quizsystem_backend",
+  "version": "1.0.0",
+  "description": "A simple Node Backend to Handle Online Quiz System App.",
+  "main": "index.js",
+  "scripts": {
+    "start": "cross-env NODE_ENV=production node src/index.js",
+    "dev": "cross-env NODE_ENV=development nodemon src/index.js",
+    "prod": "npm run start"
+  },
+  "author": "Ankit Ojha",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/PhazeAnkit/quizSystem_backend/issues"
+  },
+  "homepage": "https://github.com/PhazeAnkit/quizSystem_backend#readme",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0"
+  },
+  "devDependencies": {
+    "cross-env": "^10.1.0",
+    "nodemon": "^3.1.10"
+  }
+}
