@@ -3,8 +3,8 @@ import sequelize from "../config/db.js";
 
 const Quiz = sequelize.define("Quiz", {
   id: {
-    type: DataTypes.UUID,
-    defaultValue: DataTypes.UUIDV4,
+    type: DataTypes.INTEGER,
+    autoIncrement: true,
     primaryKey: true,
   },
   title: {
