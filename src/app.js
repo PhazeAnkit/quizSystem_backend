@@ -1,5 +1,6 @@
 import express from "express";
 import dotenv from "dotenv";
+import quizManageRoutes from "./routes/quizManageRoutes.js";
 
 dotenv.config();
 
@@ -9,6 +10,8 @@ app.use(express.json());
 app.get("/", (req, res) => {
   res.send("API is running in " + process.env.NODE_ENV + " mode");
 });
+
+app.use("/api/quiz", quizManageRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
