@@ -1,6 +1,7 @@
 import express from "express";
 import dotenv from "dotenv";
 import quizManageRoutes from "./routes/quizManageRoutes.js";
+import quizPlayRoutes from "./routes/quizPlayRoutes.js";
 
 dotenv.config();
 
@@ -12,6 +13,7 @@ app.get("/", (req, res) => {
 });
 
 app.use("/api/quiz", quizManageRoutes);
+app.use("/api/play", quizPlayRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
