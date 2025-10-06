@@ -5,6 +5,9 @@ export const createQuiz = async (req, res, next) => {
     const quiz = await quizManageService.createQuiz(req.body.title);
     res.status(201).json(quiz);
   } catch (err) {
+    if (err.message) {
+      return res.status(400).json({ error: err.message });
+    }
     next(err);
   }
 };
@@ -15,6 +18,9 @@ export const addQuestion = async (req, res, next) => {
     const question = await quizManageService.addQuestion(quizId, req.body);
     res.status(201).json(question);
   } catch (err) {
+    if (err.message) {
+      return res.status(400).json({ error: err.message });
+    }
     next(err);
   }
 };
