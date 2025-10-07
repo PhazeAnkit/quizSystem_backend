@@ -1,94 +1,60 @@
 import { Quiz, Question, Option } from "../models/index.js";
+import { throwError } from "../utils/error.js";
 
 export const getQuizQuestions = async (quizId) => {
-  if (!quizId) {
-    const err = new Error("Quiz ID is required.");
-    err.status = 400;
-    throw err;
-  }
+  if (!quizId) throwError("Quiz ID is required.", 400);
 
-  const quiz = await Quiz.findByPk(quizId);
-  if (!quiz) {
-    const err = new Error("Quiz not found.");
-    err.status = 404;
-    throw err;
-  }
-
-  const questions = await Question.findAll({
-    where: { quizId },
-    include: [{ model: Option, attributes: ["id", "text"] }],
+  const quiz = await Quiz.findByPk(quizId, {
+    include: {
+      model: Question,
+      include: [{ model: Option, attributes: ["id", "text"] }],
+    },
   });
 
-  return questions.map((q) => ({
+  if (!quiz) throwError("Quiz not found.", 404);
+
+  return quiz.Questions.map((q) => ({
     id: q.id,
     text: q.text,
     type: q.type,
-    Options: q.Options || [], // ensure Options is always array
+    Options: (q.Options || []).map(({ id, text }) => ({ id, text })), // hide correct
   }));
 };
 
 export const submitQuiz = async (quizId, answers) => {
-  if (!quizId) {
-    const err = new Error("Quiz ID is required.");
-    err.status = 400;
-    throw err;
-  }
+  if (!quizId) throwError("Quiz ID is required.", 400);
+  if (!answers || !Array.isArray(answers) || answers.length === 0)
+    throwError("Answers must be a non-empty array.", 400);
 
-  if (!answers || !Array.isArray(answers) || answers.length === 0) {
-    const err = new Error("Answers must be a non-empty array.");
-    err.status = 400;
-    throw err;
-  }
-
-  const quiz = await Quiz.findByPk(quizId);
-  if (!quiz) {
-    const err = new Error("Quiz not found.");
-    err.status = 404;
-    throw err;
-  }
-
-  const questions = await Question.findAll({
-    where: { QuizId: quizId },
-    include: [Option],
+  const quiz = await Quiz.findByPk(quizId, {
+    include: { model: Question, include: [Option] },
   });
 
-  if (!questions.length) {
-    const err = new Error("No questions found for this quiz.");
-    err.status = 400;
-    throw err;
-  }
+  if (!quiz) throwError("Quiz not found.", 404);
+  const questions = quiz.Questions;
+
+  if (!questions.length) throwError("No questions found for this quiz.", 400);
 
   for (const a of answers) {
-    if (!questions.find((q) => q.id === a.questionId)) {
-      const err = new Error(`Invalid question ID: ${a.questionId}`);
-      err.status = 400;
-      throw err;
-    }
+    if (!questions.find((q) => q.id === a.questionId))
+      throwError(`Invalid question ID: ${a.questionId}`, 400);
   }
 
   let score = 0;
 
   for (const q of questions) {
     const userAnswer = answers.find((a) => a.questionId === q.id);
-
     if (!userAnswer) continue;
 
     if (q.type === "single" || q.type === "multiple") {
       const selectedOption = q.Options.find(
         (o) => o.id === userAnswer.selectedOptionId
       );
-      if (!selectedOption) {
-        const err = new Error(
-          `Invalid option selected for question ID ${q.id}`
-        );
-        err.status = 400;
-        throw err;
-      }
+      if (!selectedOption)
+        throwError(`Invalid option selected for question ID ${q.id}`, 400);
 
       const correctOption = q.Options.find((o) => o.correct);
-      if (userAnswer.selectedOptionId === correctOption.id) {
-        score++;
-      }
+      if (selectedOption.id === correctOption.id) score++;
     }
   }
 
