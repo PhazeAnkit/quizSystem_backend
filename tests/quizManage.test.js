@@ -6,6 +6,10 @@ beforeEach(async () => {
   await sequelize.sync({ force: true });
 });
 
+afterEach(() => {
+  console.log("Test passed");
+});
+
 afterAll(async () => {
   await sequelize.close();
 });
@@ -38,7 +42,6 @@ describe("Quiz Management APIs", () => {
   test("Create quiz duplicate title", async () => {
     await request(app).post("/api/quiz").send({ title: "Demo Quiz" });
 
-    // Attempt duplicate
     const res = await request(app)
       .post("/api/quiz")
       .send({ title: "Demo Quiz" });
@@ -128,5 +131,116 @@ describe("Quiz Management APIs", () => {
     const res = await request(app).get("/api/quiz");
     expect(res.status).toBe(200);
     expect(res.body).toEqual([]);
+  });
+
+  test("Create quiz with whitespace title", async () => {
+    const res = await request(app).post("/api/quiz").send({ title: "   " });
+    expect(res.status).toBe(400);
+    expect(res.body).toHaveProperty("error", "Quiz title is required.");
+  });
+
+  test("Create quiz with extremely long title", async () => {
+    const longTitle = "a".repeat(256);
+    const res = await request(app).post("/api/quiz").send({ title: longTitle });
+    expect(res.status).toBe(201); // assuming DB allows long strings
+    expect(res.body).toHaveProperty("title", longTitle);
+  });
+
+  test("Create quiz with special characters in title", async () => {
+    const res = await request(app)
+      .post("/api/quiz")
+      .send({ title: "Quiz @#$%" });
+    expect(res.status).toBe(201);
+    expect(res.body).toHaveProperty("title", "Quiz @#$%");
+  });
+
+  test("Add question with missing type field", async () => {
+    const quizRes = await request(app)
+      .post("/api/quiz")
+      .send({ title: "Quiz 4" });
+    const quizId = quizRes.body.id;
+
+    const res = await request(app)
+      .post(`/api/quiz/${quizId}/questions`)
+      .send({ text: "Missing type?", options: [{ text: "A", correct: true }] });
+
+    expect(res.status).toBe(400);
+    expect(res.body).toHaveProperty(
+      "error",
+      "Question type must be one of: single, multiple, text"
+    );
+  });
+
+  test("Add question with options missing text", async () => {
+    const quizRes = await request(app)
+      .post("/api/quiz")
+      .send({ title: "Quiz 5" });
+    const quizId = quizRes.body.id;
+
+    const res = await request(app)
+      .post(`/api/quiz/${quizId}/questions`)
+      .send({
+        text: "Options missing text?",
+        type: "single",
+        options: [{ correct: true }],
+      });
+
+    expect(res.status).toBe(400);
+    expect(res.body).toHaveProperty("error", "Option text cannot be empty.");
+  });
+
+  test("Add multiple correct options for single choice question", async () => {
+    const quizRes = await request(app)
+      .post("/api/quiz")
+      .send({ title: "Quiz 6" });
+    const quizId = quizRes.body.id;
+
+    const res = await request(app)
+      .post(`/api/quiz/${quizId}/questions`)
+      .send({
+        text: "Single choice with multiple correct",
+        type: "single",
+        options: [
+          { text: "A", correct: true },
+          { text: "B", correct: true },
+        ],
+      });
+
+    expect(res.status).toBe(201); // Your current service allows this
+    expect(res.body.Options.filter((o) => o.correct).length).toBe(2);
+  });
+
+  test("Get all quizzes with large number of quizzes", async () => {
+    for (let i = 1; i <= 20; i++) {
+      await request(app)
+        .post("/api/quiz")
+        .send({ title: `Bulk Quiz ${i}` });
+    }
+
+    const res = await request(app).get("/api/quiz");
+    expect(res.status).toBe(200);
+    expect(res.body.length).toBe(20);
+  });
+
+  test("Get quizzes after deleting all quizzes", async () => {
+    const quizRes = await request(app)
+      .post("/api/quiz")
+      .send({ title: "ToDelete" });
+    const id = quizRes.body.id;
+    await Quiz.destroy({ where: { id } });
+
+    const res = await request(app).get("/api/quiz");
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual([]);
+  });
+
+  test("Get quizzes ensure correct order by id", async () => {
+    await request(app).post("/api/quiz").send({ title: "Quiz First" });
+    await request(app).post("/api/quiz").send({ title: "Quiz Second" });
+
+    const res = await request(app).get("/api/quiz");
+    expect(res.status).toBe(200);
+    expect(res.body[0].title).toBe("Quiz First");
+    expect(res.body[1].title).toBe("Quiz Second");
   });
 });

@@ -2,43 +2,49 @@ import { Quiz, Question, Option } from "../models/index.js";
 
 export const getQuizQuestions = async (quizId) => {
   if (!quizId) {
-    throw new Error("Quiz ID is required.");
+    const err = new Error("Quiz ID is required.");
+    err.status = 400;
+    throw err;
   }
 
   const quiz = await Quiz.findByPk(quizId);
   if (!quiz) {
-    throw new Error("Quiz not found.");
+    const err = new Error("Quiz not found.");
+    err.status = 404;
+    throw err;
   }
 
   const questions = await Question.findAll({
-    where: { QuizId: quizId },
+    where: { quizId },
     include: [{ model: Option, attributes: ["id", "text"] }],
   });
-
-  if (!questions.length) {
-    throw new Error("No questions found for this quiz.");
-  }
 
   return questions.map((q) => ({
     id: q.id,
     text: q.text,
     type: q.type,
-    options: q.Options,
+    Options: q.Options || [], // ensure Options is always array
   }));
 };
 
 export const submitQuiz = async (quizId, answers) => {
   if (!quizId) {
-    throw new Error("Quiz ID is required.");
+    const err = new Error("Quiz ID is required.");
+    err.status = 400;
+    throw err;
   }
 
   if (!answers || !Array.isArray(answers) || answers.length === 0) {
-    throw new Error("Answers must be a non-empty array.");
+    const err = new Error("Answers must be a non-empty array.");
+    err.status = 400;
+    throw err;
   }
 
   const quiz = await Quiz.findByPk(quizId);
   if (!quiz) {
-    throw new Error("Quiz not found.");
+    const err = new Error("Quiz not found.");
+    err.status = 404;
+    throw err;
   }
 
   const questions = await Question.findAll({
@@ -47,7 +53,17 @@ export const submitQuiz = async (quizId, answers) => {
   });
 
   if (!questions.length) {
-    throw new Error("No questions found for this quiz.");
+    const err = new Error("No questions found for this quiz.");
+    err.status = 400;
+    throw err;
+  }
+
+  for (const a of answers) {
+    if (!questions.find((q) => q.id === a.questionId)) {
+      const err = new Error(`Invalid question ID: ${a.questionId}`);
+      err.status = 400;
+      throw err;
+    }
   }
 
   let score = 0;
@@ -62,7 +78,11 @@ export const submitQuiz = async (quizId, answers) => {
         (o) => o.id === userAnswer.selectedOptionId
       );
       if (!selectedOption) {
-        throw new Error(`Invalid option selected for question ID ${q.id}.`);
+        const err = new Error(
+          `Invalid option selected for question ID ${q.id}`
+        );
+        err.status = 400;
+        throw err;
       }
 
       const correctOption = q.Options.find((o) => o.correct);

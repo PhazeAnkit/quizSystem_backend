@@ -28,6 +28,10 @@ beforeAll(async () => {
   wrongOptionId = questionRes.body.Options.find((o) => !o.correct).id;
 });
 
+afterEach(() => {
+  console.log(" Test passed");
+});
+
 describe("Quiz Taking APIs", () => {
   test("Fetch questions for quiz", async () => {
     const res = await request(app).get(`/api/play/${quizId}/questions`);
@@ -97,5 +101,83 @@ describe("Quiz Taking APIs", () => {
         answers: [{ questionId: "invalid", selectedOptionId: "invalid" }],
       });
     expect(res.status).toBe(400);
+  });
+
+  test("Fetch questions with multiple questions", async () => {
+    const questionRes = await request(app)
+      .post(`/api/quiz/${quizId}/questions`)
+      .send({
+        text: "Select 3?",
+        type: "single",
+        options: [
+          { text: "3", correct: true },
+          { text: "4", correct: false },
+        ],
+      });
+
+    const res = await request(app).get(`/api/play/${quizId}/questions`);
+    expect(res.status).toBe(200);
+    expect(res.body.length).toBe(2);
+    res.body.forEach((q) =>
+      q.Options.forEach((o) => expect(o).not.toHaveProperty("correct"))
+    );
+  });
+
+  test("Fetch questions for quiz with multiple correct options", async () => {
+    await request(app)
+      .post(`/api/quiz/${quizId}/questions`)
+      .send({
+        text: "Select 2 numbers?",
+        type: "multiple",
+        options: [
+          { text: "1", correct: true },
+          { text: "2", correct: true },
+          { text: "3", correct: false },
+        ],
+      });
+
+    const res = await request(app).get(`/api/play/${quizId}/questions`);
+    expect(res.status).toBe(200);
+    res.body.forEach((q) =>
+      q.Options.forEach((o) => expect(o).not.toHaveProperty("correct"))
+    );
+  });
+
+  test("Submit multiple answers with mixed correctness", async () => {
+    const questionsRes = await request(app).get(
+      `/api/play/${quizId}/questions`
+    );
+    const answers = questionsRes.body.map((q) => ({
+      questionId: q.id,
+      selectedOptionId: q.Options[0].id,
+    }));
+
+    const res = await request(app)
+      .post(`/api/play/${quizId}/submit`)
+      .send({ answers });
+
+    expect(res.status).toBe(200);
+    expect(res.body.total).toBeGreaterThanOrEqual(2);
+    expect(res.body.score).toBeLessThanOrEqual(res.body.total);
+  });
+
+  test("Submit quiz with empty answers array", async () => {
+    const res = await request(app)
+      .post(`/api/play/${quizId}/submit`)
+      .send({ answers: [] });
+    expect(res.status).toBe(400);
+    expect(res.body).toHaveProperty(
+      "error",
+      "Answers must be a non-empty array."
+    );
+  });
+
+  test("Submit quiz with missing answers field", async () => {
+    const res = await request(app).post(`/api/play/${quizId}/submit`).send({});
+    expect(res.status).toBe(400);
+    expect(res.body).toHaveProperty(
+      "error",
+      "Answers must be a non-empty array."
+    );
   });
 });

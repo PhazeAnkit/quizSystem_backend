@@ -11,10 +11,8 @@ export const getQuizQuestions = async (req, res, next) => {
     const questions = await quizPlayService.getQuizQuestions(quizId);
     res.json(questions);
   } catch (err) {
-    if (err.message) {
-      return res.status(400).json({ error: err.message });
-    }
-    next(err);
+    // Respect status code from service
+    return res.status(err.status || 400).json({ error: err.message });
   }
 };
 
@@ -36,9 +34,7 @@ export const submitQuiz = async (req, res, next) => {
     const result = await quizPlayService.submitQuiz(quizId, answers);
     res.json(result);
   } catch (err) {
-    if (err.message) {
-      return res.status(400).json({ error: err.message });
-    }
-    next(err);
+    // Respect status code from service
+    return res.status(err.status || 400).json({ error: err.message });
   }
 };
