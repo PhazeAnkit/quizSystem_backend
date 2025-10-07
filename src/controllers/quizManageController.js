@@ -5,10 +5,7 @@ export const createQuiz = async (req, res, next) => {
     const quiz = await quizManageService.createQuiz(req.body.title);
     res.status(201).json(quiz);
   } catch (err) {
-    if (err.message) {
-      return res.status(400).json({ error: err.message });
-    }
-    next(err);
+    res.status(err.status || 400).json({ error: err.message });
   }
 };
 
@@ -18,10 +15,7 @@ export const addQuestion = async (req, res, next) => {
     const question = await quizManageService.addQuestion(quizId, req.body);
     res.status(201).json(question);
   } catch (err) {
-    if (err.message) {
-      return res.status(400).json({ error: err.message });
-    }
-    next(err);
+    res.status(err.status || 400).json({ error: err.message });
   }
 };
 
@@ -30,6 +24,6 @@ export const getAllQuizzes = async (req, res, next) => {
     const quizzes = await quizManageService.getAllQuizzes();
     res.json(quizzes);
   } catch (err) {
-    next(err);
+    res.status(err.status || 500).json({ error: err.message });
   }
 };
