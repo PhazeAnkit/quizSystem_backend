@@ -1,6 +1,4 @@
-Sure! Here’s a **professional and complete README** for your Quiz Application Backend project. I’ve structured it to cover **overview, features, setup, API endpoints, database, testing, and future enhancements**.
 
----
 
 # **Quiz Application Backend**
 
@@ -24,17 +22,21 @@ The backend follows **RESTful principles**, uses **PostgreSQL** for storage, and
 
   * Create a quiz with a title
   * Add questions to a quiz with multiple options
+
 * **Quiz Taking**
 
   * Fetch questions for a quiz (correct answers hidden)
   * Submit answers and receive a score `{ "score": 3, "total": 5 }`
 
-
-* Input validation:
+* **Validation Rules**
 
   * Single/multiple-choice questions require at least one correct option
   * Text questions have a maximum length of 300 characters
-* Unit tests for all API endpoints
+  * Quiz title must be a non-empty string
+
+* **Unit Tests**
+
+  * Full coverage for all API endpoints
 
 ---
 
@@ -68,7 +70,7 @@ The backend follows **RESTful principles**, uses **PostgreSQL** for storage, and
   * `text` (string)
   * `correct` (boolean)
 
-Relationships:
+**Relationships:**
 
 * Quiz → has many Questions
 * Question → has many Options
@@ -94,15 +96,6 @@ Relationships:
 
 ---
 
-## **Validation Rules**
-
-* Questions must have at least one option if type is single or multiple
-* Each option must indicate if it is correct or not
-* Text questions cannot exceed **300 characters**
-* Quiz title must be a non-empty string
-
----
-
 ## **Setup Instructions**
 
 1. **Clone the repository**
@@ -119,7 +112,8 @@ npm install
 ```
 
 3. **Configure environment variables**
-   Create a `.env` file:
+
+Create a `.env` file:
 
 ```env
 DATABASE_URL=postgresql://username:password@host:port/dbname?sslmode=require
@@ -129,7 +123,7 @@ PORT=3000
 4. **Sync Database**
 
 ```bash
-node src/craeteTable.js
+node src/createTable.js
 ```
 
 5. **Run the server**
@@ -138,18 +132,11 @@ node src/craeteTable.js
 npm start
 ```
 
-6. **Run tests**
-
-```bash
-npm test
-```
-
 ---
 
 ## **Testing**
 
 * Unit tests are implemented using **Jest** and **Supertest**
-
 * Tests cover all endpoints including:
 
   * Creating quizzes
@@ -157,8 +144,13 @@ npm test
   * Fetching questions
   * Submitting answers
   * Validation and error handling
-
 * By default, tests run on **SQLite in-memory** database for fast execution
+
+**Run tests:**
+
+```bash
+npm test
+```
 
 ---
 
@@ -168,7 +160,10 @@ npm test
 * Support **timed quizzes**
 * Add **leaderboards** and analytics for scores
 * Support **quiz categories** or tags
+* **Live Quiz Feature**:
+
+  * Real-time quizzes between multiple participants using **WebSockets**
+  * Live score updates and question timers
+  * Instant feedback for answers
 
 ---
-
-
